@@ -41,6 +41,7 @@ select
 	location, 
 	date, 
 	total_cases, 
+	new_cases,
 	population,
 	cast(total_cases as float) / nullif(cast(population as float), 0)*100 as Incidence
 from MainData
@@ -48,7 +49,18 @@ where location like '%viet%' and total_cases is not null
 order by 1,2
 
 
--- Looking at Countries with highest infection rate compared to population
+-- Percent Population Infected (Tableau Table 4)
+select 
+	location,
+	population,
+	date,
+	max(cast(total_cases as int)) as HighestInfectionCount,
+	replace(max(cast(total_cases as float)) / nullif(population, 0)*100, ',','.') as HighestInfectionRate
+from MainData
+group by location, population, date
+
+
+-- Looking at Countries with highest infection rate compared to population (Tableau Table 3)
 select 
 	location,
 	population,
@@ -79,6 +91,17 @@ from CovidDeathsFixed
 group by continent
 order by HighestDeathsPercentage desc
 
+
+-- Shows total_cases with total_deaths in each continent (Tableau Table 2)
+select 
+	continent, 
+	sum(cast(new_cases as int)) as TotalCases, 
+	sum(cast(new_deaths as int)) as TotalDeaths
+from CovidDeathsFixed
+group by continent
+order by 1
+
+
 -- GLOBAL NUMBERS ( USE CTE )
 with GLOBAL_NUMBERS as
 (
@@ -94,6 +117,15 @@ select
 	sum(TotalNewDeaths) as GlobalDeathsTotal,
 	cast(sum(TotalNewDeaths) as float) / nullif(cast(sum(TotalNewCases) as float), 0) as DeathPercentage
 from GLOBAL_NUMBERS
+
+
+-- Fast way (Global numbers) - Tableau Table 1
+select 
+	sum(cast(new_cases as int)) as GlobalCasesTotal,
+	sum(cast(new_deaths as int)) as GlobalDeathsTotal,
+	convert(float, sum(cast(new_deaths as int))) / nullif(sum(cast(new_cases as int)), 0) as DeathPercentage
+from MainData
+
 
 -------------------------------------------
 create view [CovidVaccinationsFixed] as
