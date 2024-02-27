@@ -155,47 +155,5 @@ select *, (RollingPeopleVaccinated / population)*100 as PercentagePeopleVaccinat
 from Pop_Vaccinated
 
 
--- TEMP TABLE
-drop table if exists #PercentagePopulationVaccinated
-create table #PercentagePopulationVaccinated (
-	continent nvarchar(255),
-	location nvarchar(255),
-	date datetime,
-	population numeric,
-	new_vaccinations numeric,
-	RollingPeopleVaccinated numeric
-)
-insert into #PercentagePopulationVaccinated
-select 
-	dea.continent,
-	dea.location,
-	dea.date,
-	dea.population,
-	vac.new_vaccinations,
-	sum(convert(bigint, vac.new_vaccinations)) over (partition by dea.location order by dea.date) as RollingPeopleVaccinated
-from CovidDeathsFixed dea
-join CovidVaccinationsFixed vac
-on dea.location = vac.location
-	and dea.date = vac.date
-
-select *, (RollingPeopleVaccinated / population)*100 as PercentagePeopleVaccinated
-from #PercentagePopulationVaccinated
-order by 2,3
 
 
--- CREATE VIEW
-create view PercentagePopulationVaccinated as
-select 
-	dea.continent,
-	dea.location,
-	dea.date,
-	dea.population,
-	vac.new_vaccinations,
-	sum(convert(bigint, vac.new_vaccinations)) over (partition by dea.location order by dea.date) as RollingPeopleVaccinated
-from CovidDeathsFixed dea
-join CovidVaccinationsFixed vac
-on dea.location = vac.location
-	and dea.date = vac.date
-
-select *, (RollingPeopleVaccinated / population)*100 as PercentagePeopleVaccinated
-from PercentagePopulationVaccinated
